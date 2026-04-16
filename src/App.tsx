@@ -5,9 +5,8 @@
 
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
-import { onAuthStateChanged } from 'firebase/auth';
 import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
-import { auth, db } from './firebase';
+import { db } from './firebase';
 import ScrollToTop from './components/ScrollToTop';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -53,21 +52,19 @@ export default function App() {
   const [isAuthReady, setIsAuthReady] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user && user.email === 'eslehoon7@gmail.com') {
-        setIsAuthenticated(true);
-      } else {
-        setIsAuthenticated(false);
-      }
-      setIsAuthReady(true);
-    });
-    return () => unsubscribe();
+    const authStatus = localStorage.getItem('adminAuth');
+    if (authStatus === 'true') {
+      setIsAuthenticated(true);
+    }
+    setIsAuthReady(true);
   }, []);
 
   const handleSetIsAuthenticated = (value: boolean) => {
-    // This is now mostly handled by Firebase Auth, but we keep it for the logout button
-    if (!value) {
-      auth.signOut();
+    setIsAuthenticated(value);
+    if (value) {
+      localStorage.setItem('adminAuth', 'true');
+    } else {
+      localStorage.removeItem('adminAuth');
     }
   };
 
