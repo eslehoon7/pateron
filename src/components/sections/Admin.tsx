@@ -1,12 +1,15 @@
-import { useState, useRef } from 'react';
-import { CopyPlus, Pencil, Trash2, Image as ImageIcon, ArrowLeft } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
+import { CopyPlus, Pencil, Trash2, Image as ImageIcon, ArrowLeft, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
+import { collection, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, addDoc, serverTimestamp } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { db, storage } from '../../firebase';
 
 type Status = '대기 중' | '견적 완료' | '종료됨';
 
 interface DisplayItem {
-  id: number;
+  id: string;
   imageUrl: string | null;
   type: string;
   name: string;
@@ -46,29 +49,49 @@ interface AdminProps {
   setProductItems?: (items: DisplayItem[]) => void;
   mainItems?: DisplayItem[];
   setMainItems?: (items: DisplayItem[]) => void;
+  pageBanners?: {
+    about?: string;
+    capability?: string;
+    products?: string;
+    contact?: string;
+  };
   setIsAuthenticated?: (value: boolean) => void;
 }
 
-export default function Admin({ productItems = [], setProductItems, mainItems = [], setMainItems, setIsAuthenticated }: AdminProps) {
+export default function Admin({ productItems = [], setProductItems, mainItems = [], setMainItems, pageBanners = {}, setIsAuthenticated }: AdminProps) {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'main' | 'products'>('dashboard');
-  const [inquiries, setInquiries] = useState<Inquiry[]>(initialInquiries);
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'main' | 'products' | 'banners'>('dashboard');
+  const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [selectedInquiryId, setSelectedInquiryId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [pendingItem, setPendingItem] = useState<DisplayItem | null>(null);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingItem, setEditingItem] = useState<DisplayItem | null>(null);
+  const [editingFile, setEditingFile] = useState<File | null>(null);
   const editFileInputRef = useRef<HTMLInputElement>(null);
   const [isDeleteMode, setIsDeleteMode] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<DisplayItem | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(query(collection(db, 'inquiries'), orderBy('createdAt', 'desc')), (snapshot) => {
+      const fetchedInquiries = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Inquiry));
+      setInquiries(fetchedInquiries);
+    }, (error) => {
+      console.error("Error fetching inquiries:", error);
+    });
+    return () => unsubscribe();
+  }, []);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const imageUrl = URL.createObjectURL(file);
+      setPendingFile(file);
       setPendingItem({
-        id: Date.now(),
+        id: 'temp',
         imageUrl,
         type: activeTab === 'products' ? 'Fittings' : '새 제품종류',
         name: activeTab === 'products' ? '' : '새 제품명'
@@ -80,16 +103,41 @@ export default function Admin({ productItems = [], setProductItems, mainItems = 
     }
   };
 
-  const handleItemChange = (id: number, field: 'type' | 'name', value: string) => {
-    if (activeTab === 'main' && setMainItems) {
-      setMainItems(mainItems.map(item => item.id === id ? { ...item, [field]: value } : item));
-    } else if (activeTab === 'products' && setProductItems) {
-      setProductItems(productItems.map(item => item.id === id ? { ...item, [field]: value } : item));
+  const handleBannerUpload = async (pageId: string, file: File) => {
+    setIsUploading(true);
+    try {
+      const storageRef = ref(storage, `banners/${Date.now()}_${file.name}`);
+      await uploadBytes(storageRef, file);
+      const imageUrl = await getDownloadURL(storageRef);
+      
+      await updateDoc(doc(db, 'pageBanners', pageId), {
+        imageUrl,
+        updatedAt: serverTimestamp()
+      }).catch(async (error) => {
+        // If document doesn't exist, create it
+        if (error.code === 'not-found') {
+          const { setDoc } = await import('firebase/firestore');
+          await setDoc(doc(db, 'pageBanners', pageId), {
+            imageUrl,
+            updatedAt: serverTimestamp()
+          });
+        } else {
+          throw error;
+        }
+      });
+    } catch (error) {
+      console.error("Error updating banner:", error);
+    } finally {
+      setIsUploading(false);
     }
   };
 
-  const handleStatusChange = (id: string, newStatus: Status) => {
-    setInquiries(inquiries.map(inq => inq.id === id ? { ...inq, status: newStatus } : inq));
+  const handleStatusChange = async (id: string, newStatus: Status) => {
+    try {
+      await updateDoc(doc(db, 'inquiries', id), { status: newStatus });
+    } catch (error) {
+      console.error("Error updating status:", error);
+    }
   };
 
   const handleExportData = () => {
@@ -331,6 +379,64 @@ export default function Admin({ productItems = [], setProductItems, mainItems = 
       return renderDashboard();
     }
 
+    if (activeTab === 'banners') {
+      const bannerPages = [
+        { id: 'about', label: 'About 페이지 배너' },
+        { id: 'capability', label: 'Capability 페이지 배너' },
+        { id: 'products', label: 'Products 페이지 배너' },
+        { id: 'contact', label: 'Contact 페이지 배너' },
+      ];
+
+      return (
+        <div className="p-12 w-full">
+          <div className="mb-16">
+            <h1 className="text-2xl font-bold text-gray-900 tracking-wide">
+              ADMIN DASHBOARD | 서브페이지 배너설정
+            </h1>
+            <p className="text-gray-500 mt-2 text-sm">
+              각 서브페이지 상단에 노출되는 메인 이미지를 관리합니다.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
+            {bannerPages.map(page => (
+              <div key={page.id} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                  <h3 className="font-semibold text-gray-900">{page.label}</h3>
+                </div>
+                <div className="p-6">
+                  <div className="aspect-[21/9] bg-gray-100 rounded-lg mb-6 overflow-hidden relative group">
+                    {pageBanners[page.id as keyof typeof pageBanners] ? (
+                      <img src={pageBanners[page.id as keyof typeof pageBanners]} alt={page.label} className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center text-gray-400">
+                        <ImageIcon className="w-12 h-12 mb-2" strokeWidth={1} />
+                        <span className="text-sm">이미지 없음</span>
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <label className="cursor-pointer bg-white text-gray-900 px-4 py-2 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">
+                        이미지 변경
+                        <input 
+                          type="file" 
+                          className="hidden" 
+                          accept="image/*"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleBannerUpload(page.id, file);
+                          }}
+                        />
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
     const currentItems = activeTab === 'main' ? mainItems : productItems;
 
     return (
@@ -459,7 +565,14 @@ export default function Admin({ productItems = [], setProductItems, mainItems = 
             className={`text-[15px] tracking-wide transition-all duration-300 flex justify-end items-center group ${activeTab === 'main' ? 'text-white font-bold' : 'text-gray-400 hover:text-white'}`}
           >
             <span className={`h-[1px] bg-white transition-all duration-300 mr-4 ${activeTab === 'main' ? 'w-6 opacity-100' : 'w-0 opacity-0 group-hover:w-3 group-hover:opacity-50'}`}></span>
-            main
+            메인화면설정
+          </button>
+          <button 
+            onClick={() => { setActiveTab('banners'); setSelectedInquiryId(null); }}
+            className={`text-[15px] tracking-wide transition-all duration-300 flex justify-end items-center group ${activeTab === 'banners' ? 'text-white font-bold' : 'text-gray-400 hover:text-white'}`}
+          >
+            <span className={`h-[1px] bg-white transition-all duration-300 mr-4 ${activeTab === 'banners' ? 'w-6 opacity-100' : 'w-0 opacity-0 group-hover:w-3 group-hover:opacity-50'}`}></span>
+            서브페이지 배너설정
           </button>
           <button 
             onClick={() => { setActiveTab('products'); setSelectedInquiryId(null); }}
@@ -519,6 +632,7 @@ export default function Admin({ productItems = [], setProductItems, mainItems = 
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) {
+                      setEditingFile(file);
                       setEditingItem({ ...editingItem, imageUrl: URL.createObjectURL(file) });
                     }
                   }} 
@@ -564,18 +678,37 @@ export default function Admin({ productItems = [], setProductItems, mainItems = 
                   취소
                 </button>
                 <button
-                  onClick={() => {
-                    if (activeTab === 'main' && setMainItems) {
-                      setMainItems(mainItems.map(item => item.id === editingItem.id ? editingItem : item));
-                    } else if (activeTab === 'products' && setProductItems) {
-                      setProductItems(productItems.map(item => item.id === editingItem.id ? editingItem : item));
+                  onClick={async () => {
+                    if (!editingItem) return;
+                    setIsUploading(true);
+                    try {
+                      let imageUrl = editingItem.imageUrl;
+                      if (editingFile) {
+                        const storageRef = ref(storage, `images/${Date.now()}_${editingFile.name}`);
+                        await uploadBytes(storageRef, editingFile);
+                        imageUrl = await getDownloadURL(storageRef);
+                      }
+                      
+                      const collectionName = activeTab === 'main' ? 'mainItems' : 'productItems';
+                      await updateDoc(doc(db, collectionName, editingItem.id), {
+                        imageUrl,
+                        type: editingItem.type,
+                        name: editingItem.name
+                      });
+                      
+                      setEditingItem(null);
+                      setEditingFile(null);
+                      setIsEditMode(false);
+                    } catch (error) {
+                      console.error("Error updating item:", error);
+                    } finally {
+                      setIsUploading(false);
                     }
-                    setEditingItem(null);
-                    setIsEditMode(false);
                   }}
-                  className="px-5 py-2.5 text-sm font-medium bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
+                  disabled={isUploading}
+                  className="px-5 py-2.5 text-sm font-medium bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors flex items-center justify-center min-w-[80px]"
                 >
-                  확인
+                  {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : '확인'}
                 </button>
               </div>
             </div>
@@ -604,18 +737,24 @@ export default function Admin({ productItems = [], setProductItems, mainItems = 
                   취소
                 </button>
                 <button
-                  onClick={() => {
-                    if (activeTab === 'main' && setMainItems) {
-                      setMainItems(mainItems.filter(item => item.id !== itemToDelete.id));
-                    } else if (activeTab === 'products' && setProductItems) {
-                      setProductItems(productItems.filter(item => item.id !== itemToDelete.id));
+                  onClick={async () => {
+                    if (!itemToDelete) return;
+                    setIsUploading(true);
+                    try {
+                      const collectionName = activeTab === 'main' ? 'mainItems' : 'productItems';
+                      await deleteDoc(doc(db, collectionName, itemToDelete.id));
+                      setItemToDelete(null);
+                      setIsDeleteMode(false);
+                    } catch (error) {
+                      console.error("Error deleting item:", error);
+                    } finally {
+                      setIsUploading(false);
                     }
-                    setItemToDelete(null);
-                    setIsDeleteMode(false);
                   }}
-                  className="px-5 py-2.5 text-sm font-medium bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors w-full"
+                  disabled={isUploading}
+                  className="px-5 py-2.5 text-sm font-medium bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors w-full flex justify-center items-center"
                 >
-                  확인
+                  {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : '확인'}
                 </button>
               </div>
             </div>
@@ -672,18 +811,38 @@ export default function Admin({ productItems = [], setProductItems, mainItems = 
                   취소
                 </button>
                 <button
-                  onClick={() => {
-                    if (activeTab === 'main' && setMainItems) {
-                      setMainItems([...mainItems, pendingItem]);
-                    } else if (activeTab === 'products' && setProductItems) {
-                      setProductItems([...productItems, pendingItem]);
+                  onClick={async () => {
+                    if (!pendingItem) return;
+                    setIsUploading(true);
+                    try {
+                      let imageUrl = null;
+                      if (pendingFile) {
+                        const storageRef = ref(storage, `images/${Date.now()}_${pendingFile.name}`);
+                        await uploadBytes(storageRef, pendingFile);
+                        imageUrl = await getDownloadURL(storageRef);
+                      }
+                      
+                      const collectionName = activeTab === 'main' ? 'mainItems' : 'productItems';
+                      await addDoc(collection(db, collectionName), {
+                        imageUrl,
+                        type: pendingItem.type,
+                        name: pendingItem.name,
+                        createdAt: serverTimestamp()
+                      });
+                      
+                      setIsAddModalOpen(false);
+                      setPendingItem(null);
+                      setPendingFile(null);
+                    } catch (error) {
+                      console.error("Error adding item:", error);
+                    } finally {
+                      setIsUploading(false);
                     }
-                    setIsAddModalOpen(false);
-                    setPendingItem(null);
                   }}
-                  className="px-5 py-2.5 text-sm font-medium bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
+                  disabled={isUploading}
+                  className="px-5 py-2.5 text-sm font-medium bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors flex justify-center items-center min-w-[80px]"
                 >
-                  확인
+                  {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : '확인'}
                 </button>
               </div>
             </div>

@@ -1,0 +1,148 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    //
+    // Collection: mainItems
+    // Document ID: auto-generated
+    // Fields:
+    //   - imageUrl: string (optional) - URL of the image
+    //   - type: string (required, max 100) - Category or type
+    //   - name: string (required, max 100) - Name of the item
+    //   - createdAt: timestamp (required) - Creation time
+    //
+    // Collection: productItems
+    // Document ID: auto-generated
+    // Fields:
+    //   - imageUrl: string (optional) - URL of the image
+    //   - type: string (required, max 100) - Category or type
+    //   - name: string (required, max 100) - Name of the item
+    //   - createdAt: timestamp (required) - Creation time
+    //
+    // Collection: inquiries
+    // Document ID: auto-generated
+    // Fields:
+    //   - company: string (required, max 200)
+    //   - contact: string (required, email format)
+    //   - category: string (required, max 100)
+    //   - date: string (required, max 20)
+    //   - status: string (required, enum: '대기 중', '견적 완료', '종료됨')
+    //   - details: map (required)
+    //     - country: string (required, max 100)
+    //     - industry: string (required, max 100)
+    //     - fullName: string (required, max 100)
+    //     - phone: string (required, max 50)
+    //     - material: string (required, max 100)
+    //     - quantity: string (required, max 100)
+    //     - conditions: string (required, max 200)
+    //     - message: string (required, max 2000)
+    //   - createdAt: timestamp (required)
+    //
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      // The admin is the user with the specific email
+      return isAuthenticated() && request.auth.token.email == "eslehoon7@gmail.com" && request.auth.token.email_verified == true;
+    }
+
+    function isValidString(val, maxLen) {
+      return val is string && val.size() <= maxLen;
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$") && email.size() <= 100;
+    }
+
+    function isValidDisplayItem(data) {
+      return data.keys().hasAll(['type', 'name', 'createdAt']) &&
+             data.keys().hasOnly(['imageUrl', 'type', 'name', 'createdAt']) &&
+             (!('imageUrl' in data) || data.imageUrl == null || isValidString(data.imageUrl, 1000)) &&
+             isValidString(data.type, 100) &&
+             isValidString(data.name, 100) &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidInquiry(data) {
+      return data.keys().hasAll(['company', 'contact', 'category', 'date', 'status', 'details', 'createdAt']) &&
+             data.keys().hasOnly(['company', 'contact', 'category', 'date', 'status', 'details', 'createdAt']) &&
+             isValidString(data.company, 200) &&
+             isValidEmail(data.contact) &&
+             isValidString(data.category, 100) &&
+             isValidString(data.date, 20) &&
+             data.status in ['대기 중', '견적 완료', '종료됨'] &&
+             data.details is map &&
+             data.details.keys().hasAll(['country', 'industry', 'fullName', 'phone', 'material', 'quantity', 'conditions', 'message']) &&
+             data.details.keys().hasOnly(['country', 'industry', 'fullName', 'phone', 'material', 'quantity', 'conditions', 'message']) &&
+             isValidString(data.details.country, 100) &&
+             isValidString(data.details.industry, 100) &&
+             isValidString(data.details.fullName, 100) &&
+             isValidString(data.details.phone, 50) &&
+             isValidString(data.details.material, 100) &&
+             isValidString(data.details.quantity, 100) &&
+             isValidString(data.details.conditions, 200) &&
+             isValidString(data.details.message, 2000) &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidPageBanner(data) {
+      return data.keys().hasAll(['imageUrl', 'updatedAt']) &&
+             data.keys().hasOnly(['imageUrl', 'updatedAt']) &&
+             isValidString(data.imageUrl, 1000) &&
+             data.updatedAt is timestamp;
+    }
+
+    function isCreatedAtUnchanged() {
+      return request.resource.data.createdAt == resource.data.createdAt;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /mainItems/{itemId} {
+      // Anyone can read main items
+      allow read: if true;
+      // Only admin can create, update, delete
+      allow create: if isAdmin() && isValidDisplayItem(request.resource.data);
+      allow update: if isAdmin() && isValidDisplayItem(request.resource.data) && isCreatedAtUnchanged();
+      allow delete: if isAdmin();
+    }
+
+    match /productItems/{itemId} {
+      // Anyone can read product items
+      allow read: if true;
+      // Only admin can create, update, delete
+      allow create: if isAdmin() && isValidDisplayItem(request.resource.data);
+      allow update: if isAdmin() && isValidDisplayItem(request.resource.data) && isCreatedAtUnchanged();
+      allow delete: if isAdmin();
+    }
+
+    match /inquiries/{inquiryId} {
+      // Admin can read all inquiries
+      allow read: if isAdmin();
+      // Anyone can create an inquiry (contact form)
+      allow create: if isValidInquiry(request.resource.data);
+      // Only admin can update or delete inquiries
+      allow update: if isAdmin() && isValidInquiry(request.resource.data) && isCreatedAtUnchanged();
+      allow delete: if isAdmin();
+    }
+
+    match /pageBanners/{pageId} {
+      allow read: if true;
+      allow create: if isAdmin() && isValidPageBanner(request.resource.data);
+      allow update: if isAdmin() && isValidPageBanner(request.resource.data);
+      allow delete: if isAdmin();
+    }
+  }
+}

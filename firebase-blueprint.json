@@ -1,0 +1,113 @@
+{
+  "entities": {
+    "DisplayItem": {
+      "title": "DisplayItem",
+      "description": "An item to display on the main page or products page.",
+      "type": "object",
+      "properties": {
+        "imageUrl": {
+          "type": "string",
+          "description": "URL of the image in Firebase Storage."
+        },
+        "type": {
+          "type": "string",
+          "description": "Category or type of the item."
+        },
+        "name": {
+          "type": "string",
+          "description": "Name of the item."
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the item was created."
+        }
+      },
+      "required": ["type", "name", "createdAt"]
+    },
+    "Inquiry": {
+      "title": "Inquiry",
+      "description": "A customer inquiry or quote request.",
+      "type": "object",
+      "properties": {
+        "company": {
+          "type": "string",
+          "description": "Company name."
+        },
+        "contact": {
+          "type": "string",
+          "format": "email",
+          "description": "Contact email address."
+        },
+        "category": {
+          "type": "string",
+          "description": "Product category."
+        },
+        "date": {
+          "type": "string",
+          "description": "Date of the inquiry."
+        },
+        "status": {
+          "type": "string",
+          "enum": ["대기 중", "견적 완료", "종료됨"],
+          "description": "Current status of the inquiry."
+        },
+        "details": {
+          "type": "object",
+          "properties": {
+            "country": { "type": "string" },
+            "industry": { "type": "string" },
+            "fullName": { "type": "string" },
+            "phone": { "type": "string" },
+            "material": { "type": "string" },
+            "quantity": { "type": "string" },
+            "conditions": { "type": "string" },
+            "message": { "type": "string" }
+          },
+          "required": ["country", "industry", "fullName", "phone", "material", "quantity", "conditions", "message"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the inquiry was created."
+        }
+      },
+      "required": ["company", "contact", "category", "date", "status", "details", "createdAt"]
+    },
+    "PageBanner": {
+      "title": "PageBanner",
+      "description": "Banner image for a specific page (about, capability, products, contact).",
+      "type": "object",
+      "properties": {
+        "imageUrl": {
+          "type": "string",
+          "description": "URL of the banner image in Firebase Storage."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the banner was last updated."
+        }
+      },
+      "required": ["imageUrl", "updatedAt"]
+    }
+  },
+  "firestore": {
+    "/pageBanners/{pageId}": {
+      "schema": { "$ref": "#/entities/PageBanner" },
+      "description": "Banner images for main pages."
+    },
+    "/mainItems/{itemId}": {
+      "schema": { "$ref": "#/entities/DisplayItem" },
+      "description": "Items displayed on the main landing page."
+    },
+    "/productItems/{itemId}": {
+      "schema": { "$ref": "#/entities/DisplayItem" },
+      "description": "Items displayed on the products page."
+    },
+    "/inquiries/{inquiryId}": {
+      "schema": { "$ref": "#/entities/Inquiry" },
+      "description": "Customer inquiries and quote requests."
+    }
+  }
+}

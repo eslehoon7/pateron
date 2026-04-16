@@ -1,12 +1,16 @@
 import { motion } from 'motion/react';
 
-export default function About() {
+interface AboutProps {
+  bannerUrl?: string;
+}
+
+export default function About({ bannerUrl }: AboutProps) {
   return (
     <section className="bg-white">
       {/* Top Banner */}
       <div className="relative h-[800px] mb-24 flex items-center">
         <div className="absolute inset-0 z-0">
-          <img src="https://picsum.photos/seed/pateron-about1/1920/1080?grayscale" alt="Industrial environment" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+          <img src={bannerUrl || "https://picsum.photos/seed/pateron-about1/1920/1080?grayscale"} alt="Industrial environment" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
           <div className="absolute inset-0 bg-gray-900/50 mix-blend-multiply"></div>
         </div>
         <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-12 w-full">

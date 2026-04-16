@@ -1,23 +1,35 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { auth } from '../../firebase';
 
 interface AdminLoginProps {
   setIsAuthenticated: (value: boolean) => void;
 }
 
 export default function AdminLogin({ setIsAuthenticated }: AdminLoginProps) {
-  const [id, setId] = useState('');
-  const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (id === 'pateron' && password === 'pateron') {
-      setIsAuthenticated(true);
-      navigate('/admin');
-    } else {
-      setError('아이디 또는 비밀번호가 일치하지 않습니다.');
+  const handleLogin = async () => {
+    setIsLoading(true);
+    setError('');
+    const provider = new GoogleAuthProvider();
+    try {
+      const result = await signInWithPopup(auth, provider);
+      if (result.user.email === 'eslehoon7@gmail.com') {
+        setIsAuthenticated(true);
+        navigate('/admin');
+      } else {
+        setError('관리자 권한이 없는 계정입니다.');
+        await auth.signOut();
+      }
+    } catch (err: any) {
+      console.error(err);
+      setError('로그인 중 오류가 발생했습니다.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -31,40 +43,19 @@ export default function AdminLogin({ setIsAuthenticated }: AdminLoginProps) {
           PATERON
         </h1>
         
-        <form onSubmit={handleLogin} className="space-y-5">
-          <div>
-            <label className="block text-[11px] text-gray-400 mb-1.5 font-light uppercase tracking-wider">
-              ID
-            </label>
-            <input
-              type="text"
-              value={id}
-              onChange={(e) => setId(e.target.value)}
-              className="w-full bg-[#EBEBEB] border border-[#E0E0E0] rounded-lg px-4 py-3 focus:outline-none focus:ring-1 focus:ring-gray-400 transition-all text-sm"
-              required
-            />
-          </div>
-          
-          <div>
-            <label className="block text-[11px] text-gray-400 mb-1.5 font-light uppercase tracking-wider">
-              PASSWORD
-            </label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-[#EBEBEB] border border-[#E0E0E0] rounded-lg px-4 py-3 focus:outline-none focus:ring-1 focus:ring-gray-400 transition-all text-sm"
-              required
-            />
-          </div>
+        <div className="space-y-5">
+          <button
+            onClick={handleLogin}
+            disabled={isLoading}
+            className="w-full bg-gray-900 text-white rounded-lg px-4 py-4 font-medium hover:bg-gray-800 transition-colors disabled:opacity-50 flex items-center justify-center gap-3"
+          >
+            {isLoading ? '로그인 중...' : 'Google 계정으로 관리자 로그인'}
+          </button>
 
           {error && (
-            <p className="text-red-500 text-xs text-center mt-2">{error}</p>
+            <p className="text-red-500 text-sm text-center mt-4">{error}</p>
           )}
-
-          {/* 숨겨진 제출 버튼 (엔터키로 로그인 가능하도록) */}
-          <button type="submit" className="hidden">Login</button>
-        </form>
+        </div>
       </div>
     </div>
   );
