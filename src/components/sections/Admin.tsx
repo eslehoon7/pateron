@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { CopyPlus, Pencil, Trash2, Image as ImageIcon, ArrowLeft, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
-import { collection, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, addDoc, serverTimestamp, setDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../../firebase';
 
@@ -74,6 +74,12 @@ export default function Admin({ productItems = [], setProductItems, mainItems = 
   const [isDeleteMode, setIsDeleteMode] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<DisplayItem | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [notification, setNotification] = useState<{message: string, type: 'success' | 'error'} | null>(null);
+
+  const showNotification = (message: string, type: 'success' | 'error') => {
+    setNotification({ message, type });
+    setTimeout(() => setNotification(null), 3000);
+  };
 
   useEffect(() => {
     const unsubscribe = onSnapshot(query(collection(db, 'inquiries'), orderBy('createdAt', 'desc')), (snapshot) => {
@@ -110,23 +116,15 @@ export default function Admin({ productItems = [], setProductItems, mainItems = 
       await uploadBytes(storageRef, file);
       const imageUrl = await getDownloadURL(storageRef);
       
-      await updateDoc(doc(db, 'pageBanners', pageId), {
+      await setDoc(doc(db, 'pageBanners', pageId), {
         imageUrl,
         updatedAt: serverTimestamp()
-      }).catch(async (error) => {
-        // If document doesn't exist, create it
-        if (error.code === 'not-found') {
-          const { setDoc } = await import('firebase/firestore');
-          await setDoc(doc(db, 'pageBanners', pageId), {
-            imageUrl,
-            updatedAt: serverTimestamp()
-          });
-        } else {
-          throw error;
-        }
-      });
-    } catch (error) {
+      }, { merge: true });
+      
+      showNotification('배너 이미지가 성공적으로 업데이트되었습니다.', 'success');
+    } catch (error: any) {
       console.error("Error updating banner:", error);
+      showNotification(`업로드 실패: ${error.message || '알 수 없는 오류'}`, 'error');
     } finally {
       setIsUploading(false);
     }
@@ -604,6 +602,13 @@ export default function Admin({ productItems = [], setProductItems, mainItems = 
 
       {/* Main Content */}
       <div className="flex-1 bg-white overflow-y-auto relative">
+        {notification && (
+          <div className={`absolute top-8 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-lg shadow-lg font-medium text-sm transition-all ${
+            notification.type === 'success' ? 'bg-green-100 text-green-800 border border-green-200' : 'bg-red-100 text-red-800 border border-red-200'
+          }`}>
+            {notification.message}
+          </div>
+        )}
         {renderContent()}
 
         {/* Edit Item Modal */}
@@ -699,8 +704,10 @@ export default function Admin({ productItems = [], setProductItems, mainItems = 
                       setEditingItem(null);
                       setEditingFile(null);
                       setIsEditMode(false);
-                    } catch (error) {
+                      showNotification('항목이 성공적으로 수정되었습니다.', 'success');
+                    } catch (error: any) {
                       console.error("Error updating item:", error);
+                      showNotification(`수정 실패: ${error.message}`, 'error');
                     } finally {
                       setIsUploading(false);
                     }
@@ -833,8 +840,10 @@ export default function Admin({ productItems = [], setProductItems, mainItems = 
                       setIsAddModalOpen(false);
                       setPendingItem(null);
                       setPendingFile(null);
-                    } catch (error) {
+                      showNotification('새 항목이 성공적으로 추가되었습니다.', 'success');
+                    } catch (error: any) {
                       console.error("Error adding item:", error);
+                      showNotification(`추가 실패: ${error.message}`, 'error');
                     } finally {
                       setIsUploading(false);
                     }
