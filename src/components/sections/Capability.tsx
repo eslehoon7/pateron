@@ -50,15 +50,18 @@ export default function Capability({ bannerUrl }: CapabilityProps) {
             {[
               {
                 title: "Fitting",
-                desc: "Tube Fittings, Thread Fittings, Pipe Fittings, High pressure Fittings"
+                desc: "Tube Fittings, Thread Fittings, Pipe Fittings, High pressure Fittings",
+                image: "/images/capability-fitting.png"
               },
               {
                 title: "Valve",
-                desc: "Ball Valve, Needle Valve, Metering Valves, Check Valves, Relief Valves"
+                desc: "Ball Valve, Needle Valve, Metering Valves, Check Valves, Relief Valves",
+                image: "/images/capability-valve.png"
               },
               {
                 title: "Tube",
-                desc: "Seamless Tubes (Straight / Coil), Welded Tubes"
+                desc: "Seamless Tubes (Straight / Coil), Welded Tubes",
+                image: "/images/capability-tube.png"
               }
             ].map((item, i) => (
               <motion.div 
@@ -70,7 +73,7 @@ export default function Capability({ bannerUrl }: CapabilityProps) {
                 className="flex flex-col items-center text-center"
               >
                 <div className="w-full aspect-square bg-gray-100 mb-8 relative">
-                  <img src={`https://picsum.photos/seed/pateron-prod-cat${i}/400/400?grayscale`} alt={item.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                  <img src={item.image} onError={(e) => { e.currentTarget.src = `https://picsum.photos/seed/pateron-prod-cat${i}/400/400?grayscale`; }} alt={item.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                 </div>
                 <h3 className="text-2xl font-bold mb-4 text-gray-900">{item.title}</h3>
                 <p className="text-gray-500 font-light leading-relaxed">{item.desc}</p>
