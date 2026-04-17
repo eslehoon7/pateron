@@ -51,17 +51,17 @@ export default function Capability({ bannerUrl }: CapabilityProps) {
               {
                 title: "Fitting",
                 desc: "Tube Fittings, Thread Fittings, Pipe Fittings, High pressure Fittings",
-                image: "/images/capability-fitting.png"
+                image: "/images/피팅 사진-2.png"
               },
               {
                 title: "Valve",
                 desc: "Ball Valve, Needle Valve, Metering Valves, Check Valves, Relief Valves",
-                image: "/images/capability-valve.png"
+                image: "/images/벨브 사진6.png"
               },
               {
                 title: "Tube",
                 desc: "Seamless Tubes (Straight / Coil), Welded Tubes",
-                image: "/images/capability-tube.png"
+                image: "/images/튜브 사진3.png"
               }
             ].map((item, i) => (
               <motion.div 
