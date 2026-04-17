@@ -51,17 +51,17 @@ export default function Capability({ bannerUrl }: CapabilityProps) {
               {
                 title: "Fitting",
                 desc: "Tube Fittings, Thread Fittings, Pipe Fittings, High pressure Fittings",
-                image: "https://i.postimg.cc/tgKHvWZx/piting-sajin-2.png"
+                image: "https://iili.io/BUTHHEN.png"
               },
               {
                 title: "Valve",
                 desc: "Ball Valve, Needle Valve, Metering Valves, Check Valves, Relief Valves",
-                image: "https://i.postimg.cc/W4BPYgFN/belbeu-sajin6.png"
+                image: "https://iili.io/BUTJwJ9.png"
               },
               {
                 title: "Tube",
                 desc: "Seamless Tubes (Straight / Coil), Welded Tubes",
-                image: "https://i.postimg.cc/3wsHfm4k/tyubeu-sajin3.png"
+                image: "https://iili.io/BUTJDsR.png"
               }
             ].map((item, i) => (
               <motion.div 
