@@ -101,15 +101,18 @@ export default function About({ bannerUrl }: AboutProps) {
           {[
             {
               title: "Zero Tolerance",
-              desc: "Every component is machined to exact tolerances — because in critical environments, close enough is never enough."
+              desc: "Every component is machined to exact tolerances — because in critical environments, close enough is never enough.",
+              image: "https://iili.io/BrA3tp4.png"
             },
             {
               title: "Built-In Quality",
-              desc: "From raw material to final shipment, our integrated QC system ensures zero defects reach our customers."
+              desc: "From raw material to final shipment, our integrated QC system ensures zero defects reach our customers.",
+              image: "https://iili.io/BrAfxdg.png"
             },
             {
               title: "True Partnership",
-              desc: "We don't just manufacture parts — we take ownership of our customers' most demanding material challenges."
+              desc: "We don't just manufacture parts — we take ownership of our customers' most demanding material challenges.",
+              image: "https://iili.io/BrAohgI.png"
             }
           ].map((item, i) => (
             <motion.div 
@@ -121,7 +124,7 @@ export default function About({ bannerUrl }: AboutProps) {
               className="flex flex-col items-center text-center"
             >
               <div className="w-48 h-48 bg-gray-100 mb-8 relative">
-                 <img src={`https://picsum.photos/seed/pateron-why${i}/200/200?grayscale`} alt={item.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                 <img src={item.image || `https://picsum.photos/seed/pateron-why${i}/200/200?grayscale`} alt={item.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
               </div>
               <h3 className="text-2xl font-bold mb-4 text-gray-900">{item.title}</h3>
               <p className="text-gray-600 font-light leading-relaxed">{item.desc}</p>
