@@ -50,27 +50,27 @@ export default function About({ bannerUrl }: AboutProps) {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true, margin: "-50px" }}
               transition={{ duration: 0.6, delay: 0.1, ease: "easeOut" }}
-              className="bg-gray-100 aspect-[4/3] relative"
+              className="bg-gray-100 aspect-[4/3] relative shadow-md overflow-hidden"
             >
-              <img src="https://picsum.photos/seed/pateron-about2/400/300?grayscale" alt="Machining process" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+              <img src="https://iili.io/BUGyQTJ.png" alt="Machining process" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
             </motion.div>
             <motion.div 
               initial={{ opacity: 0, x: -30 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true, margin: "-50px" }}
               transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
-              className="bg-gray-100 aspect-[4/3] relative"
+              className="bg-gray-100 aspect-[4/3] relative shadow-md overflow-hidden"
             >
-              <img src="https://picsum.photos/seed/pateron-about3/400/300?grayscale" alt="Quality inspection" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+              <img src="https://iili.io/BUM00l4.png" alt="Quality inspection" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
             </motion.div>
             <motion.div 
               initial={{ opacity: 0, x: -30 }}
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true, margin: "-50px" }}
               transition={{ duration: 0.6, delay: 0.3, ease: "easeOut" }}
-              className="bg-gray-100 aspect-[4/3] relative"
+              className="bg-gray-100 aspect-[4/3] relative shadow-md overflow-hidden"
             >
-              <img src="https://picsum.photos/seed/pateron-about4/400/300?grayscale" alt="Finished components" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+              <img src="https://iili.io/BUM8Znj.png" alt="Finished components" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
             </motion.div>
           </div>
           <motion.div 
@@ -78,9 +78,9 @@ export default function About({ bannerUrl }: AboutProps) {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 0.8, ease: "easeOut" }}
-            className="md:col-span-8 bg-gray-100 relative min-h-[400px]"
+            className="md:col-span-8 bg-gray-100 relative min-h-[400px] shadow-md overflow-hidden"
           >
-             <img src="https://picsum.photos/seed/pateron-about5/800/1000?grayscale" alt="PATERON Facility" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+             <img src="https://iili.io/BUGo7yl.png" alt="PATERON Facility" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
           </motion.div>
         </div>
 

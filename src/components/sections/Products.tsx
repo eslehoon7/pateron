@@ -203,28 +203,89 @@ export default function Products({ productItems = [], bannerUrl }: ProductsProps
             <p className="text-xl text-gray-500 font-light">Built for Precision. Scaled for Reliability.</p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {[
-              { title: "Swiss-Type CNC Lathe", desc: "Precision machining for fittings and valves with tight tolerances" },
-              { title: "CNC Machining Center", desc: "High-precision machining for complex geometries and connection parts" },
-              { title: "Prototype to Mass Production", desc: "Flexible manufacturing system scalable from single units to full-run production" },
-              { title: "Customer-Spec OEM Production", desc: "Manufactured to exact customer specifications and connection design requirements" }
-            ].map((item, i) => (
-              <motion.div 
-                key={i} 
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-50px" }}
-                transition={{ duration: 0.6, delay: i * 0.1, ease: "easeOut" }}
-                className="flex flex-col items-center text-center"
-              >
-                <div className="w-full aspect-square bg-gray-100 mb-6 relative">
-                   <img src={`https://picsum.photos/seed/pateron-machine${i}/400/400?grayscale`} alt={item.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
-                </div>
-                <h3 className="text-lg font-bold mb-3 text-gray-900 min-h-[3.5rem]">{item.title}</h3>
-                <p className="text-sm text-gray-500 font-light">{item.desc}</p>
-              </motion.div>
-            ))}
+          <div className="space-y-20">
+            {/* Core Equipment */}
+            <div>
+              <h3 className="text-2xl font-bold mb-8 text-gray-900 border-b border-gray-200 pb-4">Core Equipment</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                {[
+                  { title: "Swiss-Type CNC Lathe", desc: "Precision machining for fittings and valves with tight tolerances", image: "https://iili.io/BU8JpMQ.png" },
+                  { title: "CNC Machining Center", desc: "High-precision machining for complex geometries and connection parts", image: "https://iili.io/BU8K8CJ.png" }
+                ].map((item, i) => (
+                  <motion.div 
+                    key={`equip-${i}`}
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: "-50px" }}
+                    transition={{ duration: 0.6, delay: i * 0.1, ease: "easeOut" }}
+                    className="flex flex-col group"
+                  >
+                    <div className="w-full aspect-[4/3] bg-gray-100 mb-6 relative overflow-hidden rounded-sm shadow-sm">
+                      <img src={item.image} alt={item.title} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" referrerPolicy="no-referrer" />
+                    </div>
+                    <h4 className="text-xl font-bold mb-2 text-gray-900">{item.title}</h4>
+                    <p className="text-gray-500 font-light">{item.desc}</p>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+
+            {/* Key Capabilities */}
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              className="bg-white"
+            >
+              <h3 className="text-2xl font-bold mb-8 text-gray-900 border-b border-gray-200 pb-4">Key Capabilities</h3>
+
+              <div className="bg-gray-50 border border-gray-100 rounded-xl p-8 mb-12 shadow-sm">
+                <ul className="space-y-6 text-lg text-gray-700">
+                  <li className="flex gap-4 items-start">
+                    <div className="mt-1 w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                      <div className="w-2 h-2 rounded-full bg-blue-600"></div>
+                    </div>
+                    <p className="leading-relaxed">OEM production environment specialized in <span className="font-bold text-gray-900 bg-blue-50 px-1">special alloy machining</span></p>
+                  </li>
+                  <li className="flex gap-4 items-start">
+                    <div className="mt-1 w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                      <div className="w-2 h-2 rounded-full bg-blue-600"></div>
+                    </div>
+                    <p className="leading-relaxed">Flexible production system for <span className="font-bold text-gray-900 bg-blue-50 px-1">project-based and repeat manufacturing</span></p>
+                  </li>
+                  <li className="flex gap-4 items-start">
+                    <div className="mt-1 w-6 h-6 rounded-full bg-blue-100 flex items-center justify-center flex-shrink-0">
+                      <div className="w-2 h-2 rounded-full bg-blue-600"></div>
+                    </div>
+                    <p className="leading-relaxed">Scalable manufacturing from <span className="font-bold text-gray-900 bg-blue-50 px-1">prototype to mass production</span></p>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                {[
+                  "Precision Special Alloy Machining",
+                  "Manufacturing of fittings, valves, and tubing components",
+                  "Production based on customer specifications and connection designs",
+                  "From small-batch production to repeated mass manufacturing"
+                ].map((text, i) => (
+                  <motion.div 
+                    key={`cap-point-${i}`}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: "-50px" }}
+                    transition={{ duration: 0.5, delay: i * 0.1, ease: "easeOut" }}
+                    className="relative bg-white border border-gray-200 p-6 rounded-xl hover:border-blue-300 hover:shadow-lg hover:-translate-y-1 transition-all duration-300 flex items-center gap-5 overflow-hidden group"
+                  >
+                    <div className="absolute left-0 top-0 bottom-0 w-1.5 bg-blue-600 scale-y-0 group-hover:scale-y-100 transition-transform origin-top duration-300"></div>
+                    <div className="w-12 h-12 bg-gray-50 group-hover:bg-blue-50 rounded-full flex items-center justify-center flex-shrink-0 transition-colors duration-300">
+                        <span className="text-gray-400 group-hover:text-blue-600 font-bold text-sm tracking-wider">0{i+1}</span>
+                    </div>
+                    <p className="text-gray-900 font-medium leading-snug">{text}</p>
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
           </div>
         </div>
 

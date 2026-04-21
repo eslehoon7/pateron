@@ -104,7 +104,7 @@ export default function Capability({ bannerUrl }: CapabilityProps) {
               transition={{ duration: 0.6, ease: "easeOut" }}
               className="aspect-square rounded-2xl bg-gray-100 overflow-hidden relative order-1"
             >
-              <img src="https://picsum.photos/seed/pateron-qms1/800/800?grayscale" alt="Production Infrastructure" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+              <img src="https://iili.io/BgOiSrF.png" alt="Production Infrastructure" className="w-full h-full object-cover object-[65%_center]" referrerPolicy="no-referrer" />
             </motion.div>
             <motion.div 
               initial={{ opacity: 0, x: 30 }}
@@ -137,7 +137,7 @@ export default function Capability({ bannerUrl }: CapabilityProps) {
               transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
               className="aspect-square rounded-2xl bg-gray-100 overflow-hidden relative order-3 md:order-4"
             >
-              <img src="https://picsum.photos/seed/pateron-qms2/800/800?grayscale" alt="Process Control" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+              <img src="https://iili.io/BgextDb.png" alt="Process Control" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
             </motion.div>
 
             {/* Item 3 */}
@@ -148,7 +148,7 @@ export default function Capability({ bannerUrl }: CapabilityProps) {
               transition={{ duration: 0.6, ease: "easeOut" }}
               className="aspect-square rounded-2xl bg-gray-100 overflow-hidden relative order-5"
             >
-              <img src="https://picsum.photos/seed/pateron-qms3/800/800?grayscale" alt="Inspection System" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+              <img src="https://iili.io/BgeSFz7.png" alt="Inspection System" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
             </motion.div>
             <motion.div 
               initial={{ opacity: 0, x: 30 }}
@@ -181,7 +181,7 @@ export default function Capability({ bannerUrl }: CapabilityProps) {
               transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
               className="aspect-square rounded-2xl bg-gray-100 overflow-hidden relative order-7 md:order-8"
             >
-              <img src="https://picsum.photos/seed/pateron-qms4/800/800?grayscale" alt="Final Verification" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+              <img src="https://iili.io/BgkdwGe.png" alt="Final Verification" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
             </motion.div>
           </div>
         </div>
