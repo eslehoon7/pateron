@@ -102,17 +102,17 @@ export default function About({ bannerUrl }: AboutProps) {
             {
               title: "Zero Tolerance",
               desc: "Every component is machined to exact tolerances — because in critical environments, close enough is never enough.",
-              image: "https://iili.io/BrA3tp4.png"
+              image: "https://iili.io/BrD1VmQ.png"
             },
             {
               title: "Built-In Quality",
               desc: "From raw material to final shipment, our integrated QC system ensures zero defects reach our customers.",
-              image: "https://iili.io/BrAfxdg.png"
+              image: "https://iili.io/BrDXlEB.png"
             },
             {
               title: "True Partnership",
               desc: "We don't just manufacture parts — we take ownership of our customers' most demanding material challenges.",
-              image: "https://iili.io/BrAohgI.png"
+              image: "https://iili.io/BrDGWiP.png"
             }
           ].map((item, i) => (
             <motion.div 

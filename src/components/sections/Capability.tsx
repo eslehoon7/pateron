@@ -148,7 +148,7 @@ export default function Capability({ bannerUrl }: CapabilityProps) {
               transition={{ duration: 0.6, ease: "easeOut" }}
               className="aspect-square rounded-2xl bg-gray-100 overflow-hidden relative order-5"
             >
-              <img src="https://iili.io/BrARn4f.png" alt="Inspection System" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+              <img src="https://iili.io/BrbcWtS.png" alt="Inspection System" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
             </motion.div>
             <motion.div 
               initial={{ opacity: 0, x: 30 }}
@@ -181,7 +181,7 @@ export default function Capability({ bannerUrl }: CapabilityProps) {
               transition={{ duration: 0.6, delay: 0.2, ease: "easeOut" }}
               className="aspect-square rounded-2xl bg-gray-100 overflow-hidden relative order-7 md:order-8"
             >
-              <img src="https://iili.io/BgkdwGe.png" alt="Final Verification" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+              <img src="https://iili.io/BrDPWle.png" alt="Final Verification" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
             </motion.div>
           </div>
         </div>
