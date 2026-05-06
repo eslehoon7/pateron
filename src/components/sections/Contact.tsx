@@ -1,5 +1,5 @@
 import { motion } from 'motion/react';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { db } from '../../firebase';
 import { Loader2 } from 'lucide-react';
@@ -35,32 +35,70 @@ export default function Contact({ bannerUrl }: ContactProps) {
     setSubmitSuccess(false);
 
     try {
-      await addDoc(collection(db, 'inquiries'), {
-        company: formData.company || 'Unknown',
-        contact: formData.email,
-        category: formData.category || 'General',
-        date: new Date().toISOString().split('T')[0],
-        status: '대기 중',
-        details: {
-          country: formData.country || '',
-          industry: formData.industry || '',
-          fullName: formData.fullName || '',
-          phone: formData.phone || '',
-          material: formData.material || '',
-          quantity: formData.quantity || '',
-          conditions: formData.conditions || '',
-          message: formData.message || ''
-        },
-        createdAt: serverTimestamp()
-      });
+      // 1. Send to Firebase (Independent)
+      const firebasePromise = (async () => {
+        try {
+          await addDoc(collection(db, 'inquiries'), {
+            company: formData.company || 'Unknown',
+            contact: formData.email,
+            category: formData.category || 'General',
+            date: new Date().toISOString().split('T')[0],
+            status: '대기 중',
+            details: {
+              country: formData.country || '',
+              industry: formData.industry || '',
+              fullName: formData.fullName || '',
+              phone: formData.phone || '',
+              material: formData.material || '',
+              quantity: formData.quantity || '',
+              conditions: formData.conditions || '',
+              message: formData.message || ''
+            },
+            createdAt: serverTimestamp()
+          });
+        } catch (err) {
+          console.error("Firebase submission failed:", err);
+        }
+      })();
+
+      // 2. Send to n8n Webhook (Independent)
+      const n8nPromise = (async () => {
+        try {
+          await fetch('https://eslehoon.app.n8n.cloud/webhook/pateron-inquiry', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              companyName: formData.company,
+              country: formData.country,
+              industry: formData.industry,
+              fullName: formData.fullName,
+              email: formData.email,
+              phone: formData.phone,
+              productCategory: formData.category,
+              material: formData.material,
+              quantity: formData.quantity,
+              operationConditions: formData.conditions,
+              message: formData.message
+            }),
+          });
+        } catch (err) {
+          console.error("n8n webhook submission failed:", err);
+        }
+      })();
+
+      // Wait for both to finalize (success or fail)
+      await Promise.all([firebasePromise, n8nPromise]);
+
       setSubmitSuccess(true);
       setFormData({
         company: '', country: '', industry: '', fullName: '', email: '',
         phone: '', category: '', material: '', quantity: '', conditions: '', message: ''
       });
     } catch (error) {
-      console.error("Error submitting inquiry:", error);
-      alert("제출 중 오류가 발생했습니다. 다시 시도해주세요.");
+      console.error("Critical error during submission:", error);
+      alert("제출 중 예기치 않은 오류가 발생했습니다. 다시 시도해주세요.");
     } finally {
       setIsSubmitting(false);
     }
