@@ -14,7 +14,7 @@ interface ProductsProps {
 }
 
 export default function Products({ productItems = [], bannerUrl }: ProductsProps) {
-  const [selectedSub, setSelectedSub] = useState('Ball & Plug Valves');
+  const [selectedSub, setSelectedSub] = useState('OTG-LOK Tube Fittings');
 
   const navigation: NavSection[] = [
     {
