@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { CopyPlus, Pencil, Trash2, Image as ImageIcon, ArrowLeft, Loader2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import * as XLSX from 'xlsx';
-import { collection, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, addDoc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, doc, updateDoc, deleteDoc, addDoc, serverTimestamp, setDoc, writeBatch } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { db, storage } from '../../firebase';
 
@@ -13,6 +13,7 @@ interface DisplayItem {
   imageUrl: string | null;
   type: string;
   name: string;
+  description?: string;
 }
 
 interface Inquiry {
@@ -72,6 +73,8 @@ export default function Admin({ productItems = [], setProductItems, mainItems = 
   const [editingFile, setEditingFile] = useState<File | null>(null);
   const editFileInputRef = useRef<HTMLInputElement>(null);
   const [isDeleteMode, setIsDeleteMode] = useState(false);
+  const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
+  const [isBulkDeleteModalOpen, setIsBulkDeleteModalOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<DisplayItem | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [notification, setNotification] = useState<{message: string, type: 'success' | 'error'} | null>(null);
@@ -99,8 +102,9 @@ export default function Admin({ productItems = [], setProductItems, mainItems = 
       setPendingItem({
         id: 'temp',
         imageUrl,
-        type: activeTab === 'products' ? 'Fittings' : '새 제품종류',
-        name: activeTab === 'products' ? '' : '새 제품명'
+        type: activeTab === 'products' ? 'OTG-LOK Tube Fittings' : '새 제품종류',
+        name: activeTab === 'products' ? '' : '새 제품명',
+        description: ''
       });
       setIsAddModalOpen(true);
     }
@@ -176,6 +180,41 @@ export default function Admin({ productItems = [], setProductItems, mainItems = 
     } catch (error) {
       console.error('Export failed:', error);
       // Fallback error logging, avoiding alert() in iframe
+    }
+  };
+
+  useEffect(() => {
+    setSelectedItemIds([]);
+  }, [activeTab, isDeleteMode]);
+
+  const toggleItemSelection = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedItemIds(prev => 
+      prev.includes(id) ? prev.filter(itemId => itemId !== id) : [...prev, id]
+    );
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedItemIds.length === 0) return;
+    setIsUploading(true);
+    try {
+      const batch = writeBatch(db);
+      const collectionName = activeTab === 'main' ? 'mainItems' : 'productItems';
+      
+      selectedItemIds.forEach(id => {
+        batch.delete(doc(db, collectionName, id));
+      });
+      
+      await batch.commit();
+      setSelectedItemIds([]);
+      setIsBulkDeleteModalOpen(false);
+      setIsDeleteMode(false);
+      showNotification(`${selectedItemIds.length}개의 항목이 삭제되었습니다.`, 'success');
+    } catch (error: any) {
+      console.error("Bulk delete error:", error);
+      showNotification(`삭제 실패: ${error.message}`, 'error');
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -471,41 +510,80 @@ export default function Admin({ productItems = [], setProductItems, mainItems = 
             <Pencil className="w-6 h-6" strokeWidth={1.5} />
           </button>
           <button 
-            onClick={() => { setIsDeleteMode(!isDeleteMode); setIsEditMode(false); }}
-            className={`transition-colors ${isDeleteMode ? 'text-red-600' : 'hover:text-gray-900'}`} 
-            title="삭제"
+            onClick={() => { 
+                if (isDeleteMode && selectedItemIds.length > 0) {
+                    setIsBulkDeleteModalOpen(true);
+                } else {
+                    setIsDeleteMode(!isDeleteMode); 
+                    setIsEditMode(false); 
+                    setSelectedItemIds([]);
+                }
+            }}
+            className={`transition-colors relative ${isDeleteMode ? 'text-red-600' : 'hover:text-gray-900'}`} 
+            title={isDeleteMode && selectedItemIds.length > 0 ? "선택 삭제" : "삭제"}
           >
-            <Trash2 className="w-6 h-6" strokeWidth={1.5} />
+            <Trash2 className="w-6 h-6 border-b-2 border-transparent" strokeWidth={1.5} />
+            {isDeleteMode && selectedItemIds.length > 0 && (
+                <span className="absolute -top-2 -right-2 bg-red-600 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
+                    {selectedItemIds.length}
+                </span>
+            )}
           </button>
+          {isDeleteMode && selectedItemIds.length > 0 && (
+            <button 
+              onClick={() => setSelectedItemIds([])}
+              className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+            >
+              선택 해제
+            </button>
+          )}
         </div>
 
         <div className="flex flex-wrap gap-8">
           {currentItems.map((item) => (
             <div 
               key={item.id} 
-              className={`w-48 ${isEditMode ? 'cursor-pointer ring-2 ring-transparent hover:ring-blue-500 rounded-2xl transition-all' : isDeleteMode ? 'cursor-pointer ring-2 ring-transparent hover:ring-red-500 rounded-2xl transition-all' : ''}`}
-              onClick={() => {
+              className={`w-48 group relative ${isEditMode ? 'cursor-pointer ring-2 ring-transparent hover:ring-blue-500 rounded-2xl transition-all' : isDeleteMode ? 'cursor-pointer rounded-2xl transition-all' : ''}`}
+              onClick={(e) => {
                 if (isEditMode) {
                   setEditingItem({ ...item });
                 } else if (isDeleteMode) {
-                  setItemToDelete(item);
+                  toggleItemSelection(item.id, e);
                 }
               }}
             >
-              <div className="w-48 h-48 bg-[#EBEBEB] rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative">
+              <div className={`w-48 h-48 bg-[#EBEBEB] rounded-2xl flex items-center justify-center mb-4 overflow-hidden relative border-2 transition-all ${
+                isDeleteMode && selectedItemIds.includes(item.id) 
+                  ? 'border-red-500 scale-[0.98] shadow-inner' 
+                  : 'border-transparent'
+              }`}>
                 {item.imageUrl ? (
-                  <img src={item.imageUrl} alt={item.name} className="w-full h-full object-cover" />
+                  <img src={item.imageUrl} alt={item.name} className={`w-full h-full object-cover transition-opacity ${isDeleteMode && selectedItemIds.includes(item.id) ? 'opacity-50' : 'opacity-100'}`} />
                 ) : (
                   <ImageIcon className="w-16 h-16 text-gray-300" strokeWidth={1} />
                 )}
+                
                 {isEditMode && (
-                  <div className="absolute inset-0 bg-blue-500/10 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                  <div className="absolute inset-0 bg-blue-500/10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                     <Pencil className="w-8 h-8 text-blue-600 drop-shadow-md" />
                   </div>
                 )}
+                
                 {isDeleteMode && (
-                  <div className="absolute inset-0 bg-red-500/10 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                    <Trash2 className="w-8 h-8 text-red-600 drop-shadow-md" />
+                  <div className={`absolute inset-0 flex items-center justify-center transition-all ${
+                    selectedItemIds.includes(item.id) 
+                      ? 'bg-red-500/10' 
+                      : 'bg-black/0 group-hover:bg-black/5'
+                  }`}>
+                    <div className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all ${
+                      selectedItemIds.includes(item.id) 
+                        ? 'bg-red-500 border-red-500' 
+                        : 'border-gray-300'
+                    }`}>
+                      {selectedItemIds.includes(item.id) && (
+                        <div className="w-2.5 h-1 border-l-2 border-b-2 border-white -rotate-45 mb-0.5" />
+                      )}
+                    </div>
                   </div>
                 )}
               </div>
@@ -656,9 +734,23 @@ export default function Admin({ productItems = [], setProductItems, mainItems = 
                         onChange={(e) => setEditingItem({ ...editingItem, type: e.target.value })}
                         className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 bg-white"
                       >
-                        <option value="Fittings">Fittings</option>
-                        <option value="Valves">Valves</option>
-                        <option value="Tubing">Tubing</option>
+                        <optgroup label="Fittings">
+                          <option value="OTG-LOK Tube Fittings">OTG-LOK Tube Fittings</option>
+                          <option value="Instrument Pipe Fittings">Instrument Pipe Fittings</option>
+                          <option value="Dielectric Fittings">Dielectric Fittings</option>
+                        </optgroup>
+                        <optgroup label="Valves">
+                          <option value="Ball & Plug Valves">Ball & Plug Valves</option>
+                          <option value="Needle Valves">Needle Valves</option>
+                          <option value="Check Valves">Check Valves</option>
+                          <option value="Relief Valves">Relief Valves</option>
+                          <option value="Gauge Valves">Gauge Valves</option>
+                          <option value="Bleed & Purge Valves">Bleed & Purge Valves</option>
+                        </optgroup>
+                        <optgroup label="Others">
+                          <option value="Quick Connects">Quick Connects</option>
+                          <option value="Filters">Filters</option>
+                        </optgroup>
                       </select>
                     </div>
                     <div>
@@ -669,6 +761,16 @@ export default function Admin({ productItems = [], setProductItems, mainItems = 
                         onChange={(e) => setEditingItem({ ...editingItem, name: e.target.value })}
                         placeholder="명칭을 입력하세요"
                         className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">상세 설명</label>
+                      <textarea
+                        value={editingItem.description || ''}
+                        onChange={(e) => setEditingItem({ ...editingItem, description: e.target.value })}
+                        placeholder="제품의 상세 설명을 입력하세요"
+                        rows={3}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 resize-none"
                       />
                     </div>
                   </>
@@ -698,7 +800,8 @@ export default function Admin({ productItems = [], setProductItems, mainItems = 
                       await updateDoc(doc(db, collectionName, editingItem.id), {
                         imageUrl,
                         type: editingItem.type,
-                        name: editingItem.name
+                        name: editingItem.name,
+                        description: editingItem.description || ''
                       });
                       
                       setEditingItem(null);
@@ -722,7 +825,37 @@ export default function Admin({ productItems = [], setProductItems, mainItems = 
           </div>
         )}
 
-        {/* Delete Confirmation Modal */}
+        {/* Bulk Delete Confirmation Modal */}
+        {isBulkDeleteModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+            <div className="bg-white rounded-2xl p-8 w-full max-w-sm shadow-2xl text-center">
+              <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Trash2 className="w-8 h-8" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">항목 대량 삭제</h3>
+              <p className="text-gray-500 mb-8 leading-relaxed">
+                정말로 선택한 <span className="font-bold text-red-600">{selectedItemIds.length}개</span>의 항목을 삭제하시겠습니까?<br/>이 작업은 되돌릴 수 없습니다.
+              </p>
+              <div className="flex justify-center gap-3">
+                <button
+                  onClick={() => setIsBulkDeleteModalOpen(false)}
+                  className="px-5 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors w-full"
+                >
+                  취소
+                </button>
+                <button
+                  onClick={handleBulkDelete}
+                  disabled={isUploading}
+                  className="px-5 py-2.5 text-sm font-medium bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors w-full flex justify-center items-center"
+                >
+                  {isUploading ? <Loader2 className="w-4 h-4 animate-spin" /> : '확인'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal (Single) */}
         {itemToDelete && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
             <div className="bg-white rounded-2xl p-8 w-full max-w-sm shadow-2xl text-center">
@@ -788,9 +921,23 @@ export default function Admin({ productItems = [], setProductItems, mainItems = 
                         onChange={(e) => setPendingItem({ ...pendingItem, type: e.target.value })}
                         className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 bg-white"
                       >
-                        <option value="Fittings">Fittings</option>
-                        <option value="Valves">Valves</option>
-                        <option value="Tubing">Tubing</option>
+                        <optgroup label="Fittings">
+                          <option value="OTG-LOK Tube Fittings">OTG-LOK Tube Fittings</option>
+                          <option value="Instrument Pipe Fittings">Instrument Pipe Fittings</option>
+                          <option value="Dielectric Fittings">Dielectric Fittings</option>
+                        </optgroup>
+                        <optgroup label="Valves">
+                          <option value="Ball & Plug Valves">Ball & Plug Valves</option>
+                          <option value="Needle Valves">Needle Valves</option>
+                          <option value="Check Valves">Check Valves</option>
+                          <option value="Relief Valves">Relief Valves</option>
+                          <option value="Gauge Valves">Gauge Valves</option>
+                          <option value="Bleed & Purge Valves">Bleed & Purge Valves</option>
+                        </optgroup>
+                        <optgroup label="Others">
+                          <option value="Quick Connects">Quick Connects</option>
+                          <option value="Filters">Filters</option>
+                        </optgroup>
                       </select>
                     </div>
                     <div>
@@ -801,6 +948,16 @@ export default function Admin({ productItems = [], setProductItems, mainItems = 
                         onChange={(e) => setPendingItem({ ...pendingItem, name: e.target.value })}
                         placeholder="명칭을 입력하세요"
                         className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1.5">상세 설명</label>
+                      <textarea
+                        value={pendingItem.description || ''}
+                        onChange={(e) => setPendingItem({ ...pendingItem, description: e.target.value })}
+                        placeholder="제품의 상세 설명을 입력하세요"
+                        rows={3}
+                        className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 resize-none"
                       />
                     </div>
                   </>
@@ -834,6 +991,7 @@ export default function Admin({ productItems = [], setProductItems, mainItems = 
                         imageUrl,
                         type: pendingItem.type,
                         name: pendingItem.name,
+                        description: pendingItem.description || '',
                         createdAt: serverTimestamp()
                       });
                       

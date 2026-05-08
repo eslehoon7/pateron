@@ -10,9 +10,8 @@ interface HeroProps {
 export default function Hero({ mainItems = [] }: HeroProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
   
-  // Get valid image URLs or use a default fallback if none exist
-  const validImages = mainItems.filter(item => item.imageUrl).map(item => item.imageUrl as string);
-  const images = validImages.length > 0 ? validImages : ['https://picsum.photos/seed/pateron-hero-full/1920/1080?grayscale'];
+  // Get valid image URLs
+  const images = mainItems.filter(item => item.imageUrl).map(item => item.imageUrl as string);
 
   useEffect(() => {
     if (images.length <= 1) return;
@@ -29,17 +28,19 @@ export default function Hero({ mainItems = [] }: HeroProps) {
       {/* Full-screen Background Image Carousel */}
       <div className="absolute inset-0 z-0 bg-gray-900">
         <AnimatePresence mode="popLayout">
-          <motion.img 
-            key={currentIndex}
-            src={images[currentIndex]} 
-            alt="Precision Manufacturing" 
-            className="absolute inset-0 w-full h-full object-cover"
-            initial={{ opacity: 0, scale: 1.05 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 1.5, ease: "easeInOut" }}
-            referrerPolicy="no-referrer"
-          />
+          {images.length > 0 && (
+            <motion.img 
+              key={images[currentIndex] || currentIndex}
+              src={images[currentIndex]} 
+              alt="Precision Manufacturing" 
+              className="absolute inset-0 w-full h-full object-cover"
+              initial={{ opacity: 0, scale: 1.05 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 1.5, ease: "easeInOut" }}
+              referrerPolicy="no-referrer"
+            />
+          )}
         </AnimatePresence>
         {/* Overlays for better text readability */}
         <div className="absolute inset-0 bg-black/50 z-10"></div>

@@ -10,7 +10,7 @@ export default function About({ bannerUrl }: AboutProps) {
       {/* Top Banner */}
       <div className="relative h-[800px] mb-24 flex items-center">
         <div className="absolute inset-0 z-0">
-          <img src={bannerUrl || "https://picsum.photos/seed/pateron-about1/1920/1080?grayscale"} alt="Industrial environment" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+          <img src={bannerUrl} alt="Industrial environment" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
           <div className="absolute inset-0 bg-gray-900/50 mix-blend-multiply"></div>
         </div>
         <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-12 w-full">
@@ -124,7 +124,7 @@ export default function About({ bannerUrl }: AboutProps) {
               className="flex flex-col items-center text-center"
             >
               <div className="w-48 h-48 bg-gray-100 mb-8 relative">
-                 <img src={item.image || `https://picsum.photos/seed/pateron-why${i}/200/200?grayscale`} alt={item.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                 <img src={item.image} alt={item.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
               </div>
               <h3 className="text-2xl font-bold mb-4 text-gray-900">{item.title}</h3>
               <p className="text-gray-600 font-light leading-relaxed">{item.desc}</p>

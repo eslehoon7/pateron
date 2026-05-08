@@ -109,7 +109,7 @@ export default function Contact({ bannerUrl }: ContactProps) {
       {/* Top Banner */}
       <div className="relative h-[800px] mb-24 flex items-center">
         <div className="absolute inset-0 z-0">
-          <img src={bannerUrl || "https://picsum.photos/seed/pateron-contact/1920/1080?grayscale"} alt="Contact Us" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+          <img src={bannerUrl} alt="Contact Us" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
           <div className="absolute inset-0 bg-gray-900/50 mix-blend-multiply"></div>
         </div>
         <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-12 w-full">

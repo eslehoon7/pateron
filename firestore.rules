@@ -20,6 +20,7 @@ service cloud.firestore {
     //   - imageUrl: string (optional) - URL of the image
     //   - type: string (required, max 100) - Category or type
     //   - name: string (required, max 100) - Name of the item
+    //   - description: string (optional, max 5000) - Product description
     //   - createdAt: timestamp (required) - Creation time
     //
     // Collection: inquiries
@@ -66,10 +67,11 @@ service cloud.firestore {
 
     function isValidDisplayItem(data) {
       return data.keys().hasAll(['type', 'name', 'createdAt']) &&
-             data.keys().hasOnly(['imageUrl', 'type', 'name', 'createdAt']) &&
+             data.keys().hasOnly(['imageUrl', 'type', 'name', 'description', 'createdAt']) &&
              (!('imageUrl' in data) || data.imageUrl == null || isValidString(data.imageUrl, 1000)) &&
              isValidString(data.type, 100) &&
              isValidString(data.name, 100) &&
+             (!('description' in data) || isValidString(data.description, 5000)) &&
              data.createdAt is timestamp;
     }
 

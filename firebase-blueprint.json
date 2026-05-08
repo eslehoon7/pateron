@@ -7,7 +7,7 @@
       "properties": {
         "imageUrl": {
           "type": "string",
-          "description": "URL of the image in Firebase Storage."
+          "description": "URL of the image."
         },
         "type": {
           "type": "string",
@@ -16,6 +16,10 @@
         "name": {
           "type": "string",
           "description": "Name of the item."
+        },
+        "description": {
+          "type": "string",
+          "description": "Detailed description of the product."
         },
         "createdAt": {
           "type": "string",

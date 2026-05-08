@@ -23,6 +23,7 @@ export interface DisplayItem {
   imageUrl: string | null;
   type: string;
   name: string;
+  description?: string;
 }
 
 export interface PageBanners {

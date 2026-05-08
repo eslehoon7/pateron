@@ -10,7 +10,7 @@ export default function Capability({ bannerUrl }: CapabilityProps) {
       {/* Top Banner */}
       <div className="relative h-[800px] mb-24 flex items-center">
         <div className="absolute inset-0 z-0">
-          <img src={bannerUrl || "https://picsum.photos/seed/pateron-prod1/1920/1080?grayscale"} alt="Extreme Environments" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+          <img src={bannerUrl} alt="Extreme Environments" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
           <div className="absolute inset-0 bg-gray-900/50 mix-blend-multiply"></div>
         </div>
         <div className="relative z-10 max-w-7xl mx-auto px-6 md:px-12 w-full">
@@ -73,7 +73,7 @@ export default function Capability({ bannerUrl }: CapabilityProps) {
                 className="flex flex-col items-center text-center"
               >
                 <div className="w-full aspect-square bg-gray-100 mb-8 relative">
-                  <img src={item.image} onError={(e) => { e.currentTarget.src = `https://picsum.photos/seed/pateron-prod-cat${i}/400/400?grayscale`; }} alt={item.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+                  <img src={item.image} alt={item.title} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
                 </div>
                 <h3 className="text-2xl font-bold mb-4 text-gray-900">{item.title}</h3>
                 <p className="text-gray-500 font-light leading-relaxed">{item.desc}</p>
