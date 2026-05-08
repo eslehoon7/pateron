@@ -162,7 +162,7 @@ export default function Products({ productItems = [], bannerUrl }: ProductsProps
                 className="group flex flex-col cursor-pointer"
               >
                 {/* Image Container */}
-                <div className="aspect-square bg-[#F8FAFC] rounded-sm overflow-hidden flex items-center justify-center p-4 transition-all duration-500 group-hover:shadow-xl group-hover:-translate-y-1 border border-gray-100 group-hover:border-gray-200">
+                <div className="aspect-square bg-white rounded-sm overflow-hidden flex items-center justify-center p-4 transition-all duration-500 group-hover:shadow-xl group-hover:-translate-y-1 border border-gray-100 group-hover:border-gray-200">
                   <img 
                     src={product.imageUrl || product.image} 
                     alt={product.name}
