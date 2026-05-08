@@ -14,6 +14,7 @@ interface DisplayItem {
   type: string;
   name: string;
   description?: string;
+  createdAt?: any;
 }
 
 interface Inquiry {
@@ -749,7 +750,6 @@ export default function Admin({ productItems = [], setProductItems, mainItems = 
                         </optgroup>
                         <optgroup label="Others">
                           <option value="Quick Connects">Quick Connects</option>
-                          <option value="Filters">Filters</option>
                         </optgroup>
                       </select>
                     </div>
@@ -936,7 +936,6 @@ export default function Admin({ productItems = [], setProductItems, mainItems = 
                         </optgroup>
                         <optgroup label="Others">
                           <option value="Quick Connects">Quick Connects</option>
-                          <option value="Filters">Filters</option>
                         </optgroup>
                       </select>
                     </div>

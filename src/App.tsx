@@ -24,6 +24,7 @@ export interface DisplayItem {
   type: string;
   name: string;
   description?: string;
+  createdAt?: any;
 }
 
 export interface PageBanners {

@@ -1,6 +1,6 @@
-import { useState } from 'react';
-import { motion } from 'motion/react';
-import { Search } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
 import { DisplayItem } from '../../App';
 
 interface NavSection {
@@ -15,6 +15,13 @@ interface ProductsProps {
 
 export default function Products({ productItems = [], bannerUrl }: ProductsProps) {
   const [selectedSub, setSelectedSub] = useState('OTG-LOK Tube Fittings');
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 9;
+
+  // Reset pagination when category changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedSub]);
 
   const navigation: NavSection[] = [
     {
@@ -34,10 +41,6 @@ export default function Products({ productItems = [], bannerUrl }: ProductsProps
     },
     {
       title: 'Quick Connects',
-      items: []
-    },
-    {
-      title: 'Filters',
       items: []
     }
   ];
@@ -61,16 +64,28 @@ export default function Products({ productItems = [], bannerUrl }: ProductsProps
     }
   ];
 
-  const filteredProducts = productItems.filter(item => item.type === selectedSub);
+  // Logic: 1. Sort by latest registration, 2. Filter by category, 3. Paginate (9 items)
+  // CRITICAL: This sorting logic (latest first) must be maintained.
+  const processedProducts = [...productItems]
+    .sort((a, b) => {
+      const dateA = a.createdAt?.toDate?.() ? a.createdAt.toDate().getTime() : (a.createdAt instanceof Date ? a.createdAt.getTime() : 0);
+      const dateB = b.createdAt?.toDate?.() ? b.createdAt.toDate().getTime() : (b.createdAt instanceof Date ? b.createdAt.getTime() : 0);
+      return dateB - dateA;
+    })
+    .filter(item => item.type === selectedSub);
+
+  const totalPages = Math.max(1, Math.ceil(processedProducts.length / ITEMS_PER_PAGE));
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const paginatedItems = processedProducts.slice(startIndex, startIndex + ITEMS_PER_PAGE);
   
-  // Use filtered products if available, otherwise fallback to placeholders for design preview
-  const displayProducts = filteredProducts.length > 0 ? filteredProducts : products.map(p => ({
+  // Use paginated items if available, otherwise fallback to placeholders for design preview (limited to 9)
+  const displayProducts = paginatedItems.length > 0 ? paginatedItems : (currentPage === 1 ? products.slice(0, 9).map(p => ({
     id: p.name,
     name: p.name,
     imageUrl: p.image,
     type: selectedSub,
     description: '공정에 따른 특수 합금 설계 및 정밀 가공을 통해 제작된 고성능 제품입니다.'
-  }));
+  })) : []);
 
   return (
     <div className="bg-white min-h-screen font-sans">
@@ -110,26 +125,27 @@ export default function Products({ productItems = [], bannerUrl }: ProductsProps
           <nav className="space-y-12">
             {navigation.map((section) => (
               <div key={section.title}>
-                <h3 className="text-lg font-bold text-gray-900 mb-6 tracking-tight">{section.title}</h3>
-                {section.items.length > 0 && (
-                  <ul className="space-y-4 border-t border-gray-100 pt-6">
-                    {section.items.map((item) => (
-                      <li key={item}>
-                        <button
-                          onClick={() => setSelectedSub(item)}
-                          className={`text-sm transition-all duration-300 block text-left w-full leading-snug ${
-                            selectedSub === item 
-                              ? 'text-blue-700 font-bold' 
-                              : 'text-gray-500 hover:text-blue-600 hover:pl-2'
-                          }`}
-                        >
-                          {item}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-                {section.items.length === 0 && (
+                {section.items.length > 0 ? (
+                  <>
+                    <h3 className="text-lg font-bold text-gray-900 mb-6 tracking-tight">{section.title}</h3>
+                    <ul className="space-y-4 border-t border-gray-100 pt-6">
+                      {section.items.map((item) => (
+                        <li key={item}>
+                          <button
+                            onClick={() => setSelectedSub(item)}
+                            className={`text-sm transition-all duration-300 block text-left w-full leading-snug ${
+                              selectedSub === item 
+                                ? 'text-blue-700 font-bold' 
+                                : 'text-gray-500 hover:text-blue-600 hover:pl-2'
+                            }`}
+                          >
+                            {item}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                ) : (
                   <button
                     onClick={() => setSelectedSub(section.title)}
                     className={`text-lg font-bold transition-all duration-300 block text-left w-full tracking-tight mb-6 mt-12 ${
@@ -192,6 +208,50 @@ export default function Products({ productItems = [], bannerUrl }: ProductsProps
                {[...Array(3 - displayProducts.length)].map((_, i) => (
                  <div key={i} className="aspect-square bg-gray-200"></div>
                ))}
+            </div>
+          )}
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="mt-20 flex items-center justify-center gap-4">
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className={`p-2 rounded-full border transition-all ${
+                  currentPage === 1 
+                    ? 'border-gray-100 text-gray-300 cursor-not-allowed' 
+                    : 'border-gray-200 text-gray-600 hover:border-blue-600 hover:text-blue-600'
+                }`}
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              
+              <div className="flex items-center gap-2">
+                {[...Array(totalPages)].map((_, i) => (
+                  <button
+                    key={i + 1}
+                    onClick={() => setCurrentPage(i + 1)}
+                    className={`w-10 h-10 rounded-full text-sm font-medium transition-all ${
+                      currentPage === i + 1
+                        ? 'bg-blue-600 text-white'
+                        : 'text-gray-500 hover:bg-gray-100'
+                    }`}
+                  >
+                    {i + 1}
+                  </button>
+                ))}
+              </div>
+
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                className={`p-2 rounded-full border transition-all ${
+                  currentPage === totalPages 
+                    ? 'border-gray-100 text-gray-300 cursor-not-allowed' 
+                    : 'border-gray-200 text-gray-600 hover:border-blue-600 hover:text-blue-600'
+                }`}
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
             </div>
           )}
         </main>
