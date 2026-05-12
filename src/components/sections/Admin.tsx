@@ -58,11 +58,14 @@ interface AdminProps {
     contact?: string;
   };
   setIsAuthenticated?: (value: boolean) => void;
+  settings?: {
+    tubeFittingsVisible?: boolean;
+  };
 }
 
-export default function Admin({ productItems = [], setProductItems, mainItems = [], setMainItems, pageBanners = {}, setIsAuthenticated }: AdminProps) {
+export default function Admin({ productItems = [], setProductItems, mainItems = [], setMainItems, pageBanners = {}, setIsAuthenticated, settings }: AdminProps) {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'main' | 'products' | 'banners'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'main' | 'products' | 'banners' | 'settings'>('dashboard');
   const [inquiries, setInquiries] = useState<Inquiry[]>([]);
   const [selectedInquiryId, setSelectedInquiryId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -103,7 +106,7 @@ export default function Admin({ productItems = [], setProductItems, mainItems = 
       setPendingItem({
         id: 'temp',
         imageUrl,
-        type: activeTab === 'products' ? 'OTG-LOK Tube Fittings' : '새 제품종류',
+        type: activeTab === 'products' ? 'Tube Fittings' : '새 제품종류',
         name: activeTab === 'products' ? '' : '새 제품명',
         description: ''
       });
@@ -475,6 +478,60 @@ export default function Admin({ productItems = [], setProductItems, mainItems = 
       );
     }
 
+    if (activeTab === 'settings') {
+      return (
+        <div className="p-12 w-full max-w-4xl">
+          <div className="mb-16">
+            <h1 className="text-2xl font-bold text-gray-900 tracking-wide">
+              ADMIN DASHBOARD | 시스템 설정
+            </h1>
+            <p className="text-gray-500 mt-2 text-sm">
+              웹사이트의 전반적인 구성을 관리합니다.
+            </p>
+          </div>
+
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="px-8 py-6 border-b border-gray-200 bg-gray-50">
+              <h3 className="font-semibold text-gray-900">카테고리 노출 설정</h3>
+            </div>
+            <div className="p-8">
+              <div className="flex items-center justify-between py-4 border-b border-gray-100 last:border-0">
+                <div>
+                  <h4 className="font-medium text-gray-900">Tube Fittings</h4>
+                  <p className="text-sm text-gray-500 mt-1">제품 페이지 사이드바에서 해당 카테고리를 노출하거나 숨깁니다.</p>
+                </div>
+                <button
+                  onClick={async () => {
+                    setIsUploading(true);
+                    try {
+                      await setDoc(doc(db, 'settings', 'categories'), {
+                        tubeFittingsVisible: !settings?.tubeFittingsVisible,
+                        updatedAt: serverTimestamp()
+                      }, { merge: true });
+                      showNotification(`Tube Fittings 카테고리가 ${!settings?.tubeFittingsVisible ? '활성화' : '비활성화'}되었습니다.`, 'success');
+                    } catch (error: any) {
+                      showNotification(`설정 변경 실패: ${error.message}`, 'error');
+                    } finally {
+                      setIsUploading(false);
+                    }
+                  }}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${
+                    settings?.tubeFittingsVisible ? 'bg-blue-600' : 'bg-gray-200'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      settings?.tubeFittingsVisible ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
     const currentItems = activeTab === 'main' ? mainItems : productItems;
 
     return (
@@ -592,7 +649,7 @@ export default function Admin({ productItems = [], setProductItems, mainItems = 
                 <>
                   <div className="flex justify-between text-[13px] text-gray-500 mb-2 px-1">
                     <span>종류</span>
-                    <span>{item.type}</span>
+                    <span>{item.type === 'OTG-LOK Tube Fittings' ? 'Tube Fittings' : item.type}</span>
                   </div>
                   <div className="flex justify-between text-[13px] text-gray-500 px-1">
                     <span>명칭</span>
@@ -657,6 +714,13 @@ export default function Admin({ productItems = [], setProductItems, mainItems = 
           >
             <span className={`h-[1px] bg-white transition-all duration-300 mr-4 ${activeTab === 'products' ? 'w-6 opacity-100' : 'w-0 opacity-0 group-hover:w-3 group-hover:opacity-50'}`}></span>
             제품설정
+          </button>
+          <button 
+            onClick={() => { setActiveTab('settings'); setSelectedInquiryId(null); }}
+            className={`text-[15px] tracking-wide transition-all duration-300 flex justify-end items-center group ${activeTab === 'settings' ? 'text-white font-bold' : 'text-gray-400 hover:text-white'}`}
+          >
+            <span className={`h-[1px] bg-white transition-all duration-300 mr-4 ${activeTab === 'settings' ? 'w-6 opacity-100' : 'w-0 opacity-0 group-hover:w-3 group-hover:opacity-50'}`}></span>
+            시스템설정
           </button>
         </nav>
 
@@ -731,12 +795,12 @@ export default function Admin({ productItems = [], setProductItems, mainItems = 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1.5">종류</label>
                       <select
-                        value={editingItem.type}
+                        value={editingItem.type === 'OTG-LOK Tube Fittings' ? 'Tube Fittings' : editingItem.type}
                         onChange={(e) => setEditingItem({ ...editingItem, type: e.target.value })}
                         className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 bg-white"
                       >
                         <optgroup label="Fittings">
-                          <option value="OTG-LOK Tube Fittings">OTG-LOK Tube Fittings</option>
+                          <option value="Tube Fittings">Tube Fittings</option>
                           <option value="Instrument Pipe Fittings">Instrument Pipe Fittings</option>
                           <option value="Dielectric Fittings">Dielectric Fittings</option>
                         </optgroup>
@@ -917,12 +981,12 @@ export default function Admin({ productItems = [], setProductItems, mainItems = 
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1.5">종류</label>
                       <select
-                        value={pendingItem.type}
+                        value={pendingItem.type === 'OTG-LOK Tube Fittings' ? 'Tube Fittings' : pendingItem.type}
                         onChange={(e) => setPendingItem({ ...pendingItem, type: e.target.value })}
                         className="w-full border border-gray-300 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 bg-white"
                       >
                         <optgroup label="Fittings">
-                          <option value="OTG-LOK Tube Fittings">OTG-LOK Tube Fittings</option>
+                          <option value="Tube Fittings">Tube Fittings</option>
                           <option value="Instrument Pipe Fittings">Instrument Pipe Fittings</option>
                           <option value="Dielectric Fittings">Dielectric Fittings</option>
                         </optgroup>

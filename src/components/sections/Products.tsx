@@ -11,22 +11,21 @@ interface NavSection {
 interface ProductsProps {
   productItems?: DisplayItem[];
   bannerUrl?: string;
+  settings?: {
+    tubeFittingsVisible?: boolean;
+  };
 }
 
-export default function Products({ productItems = [], bannerUrl }: ProductsProps) {
-  const [selectedSub, setSelectedSub] = useState('OTG-LOK Tube Fittings');
+export default function Products({ productItems = [], bannerUrl, settings }: ProductsProps) {
+  const [selectedSub, setSelectedSub] = useState('Tube Fittings');
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 9;
 
-  // Reset pagination when category changes
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [selectedSub]);
-
-  const navigation: NavSection[] = [
+  // Navigation structure
+  const rawNavigation: NavSection[] = [
     {
       title: 'Fittings',
-      items: ['OTG-LOK Tube Fittings', 'Instrument Pipe Fittings', 'Dielectric Fittings']
+      items: ['Tube Fittings', 'Instrument Pipe Fittings', 'Dielectric Fittings']
     },
     {
       title: 'Valves',
@@ -44,6 +43,31 @@ export default function Products({ productItems = [], bannerUrl }: ProductsProps
       items: []
     }
   ];
+
+  // Apply visibility settings
+  const navigation = rawNavigation.map(section => {
+    if (section.title === 'Fittings') {
+      return {
+        ...section,
+        items: settings?.tubeFittingsVisible === false 
+          ? section.items.filter(item => item !== 'Tube Fittings')
+          : section.items
+      };
+    }
+    return section;
+  });
+
+  // Handle case where selectedSub becomes hidden
+  useEffect(() => {
+    if (settings?.tubeFittingsVisible === false && selectedSub === 'Tube Fittings') {
+      setSelectedSub('Instrument Pipe Fittings');
+    }
+  }, [settings?.tubeFittingsVisible, selectedSub]);
+
+  // Reset pagination when category changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedSub]);
 
   const products = [
     {
@@ -72,7 +96,12 @@ export default function Products({ productItems = [], bannerUrl }: ProductsProps
       const dateB = b.createdAt?.toDate?.() ? b.createdAt.toDate().getTime() : (b.createdAt instanceof Date ? b.createdAt.getTime() : 0);
       return dateB - dateA;
     })
-    .filter(item => item.type === selectedSub);
+    .filter(item => {
+      if (selectedSub === 'Tube Fittings') {
+        return item.type === 'Tube Fittings' || item.type === 'OTG-LOK Tube Fittings';
+      }
+      return item.type === selectedSub;
+    });
 
   const totalPages = Math.max(1, Math.ceil(processedProducts.length / ITEMS_PER_PAGE));
   const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;

@@ -104,6 +104,13 @@ service cloud.firestore {
              data.updatedAt is timestamp;
     }
 
+    function isValidSettings(data) {
+      return data.keys().hasAll(['updatedAt']) &&
+             data.keys().hasOnly(['tubeFittingsVisible', 'updatedAt']) &&
+             (!('tubeFittingsVisible' in data) || data.tubeFittingsVisible is bool) &&
+             data.updatedAt is timestamp;
+    }
+
     function isCreatedAtUnchanged() {
       return request.resource.data.createdAt == resource.data.createdAt;
     }
@@ -111,6 +118,11 @@ service cloud.firestore {
     // ===============================================================
     // Rules
     // ===============================================================
+
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin() && isValidSettings(request.resource.data);
+    }
 
     match /mainItems/{itemId} {
       // Anyone can read main items

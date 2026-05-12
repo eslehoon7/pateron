@@ -5,7 +5,7 @@
 
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import React, { useState, useEffect } from 'react';
-import { collection, onSnapshot, query, orderBy } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, doc } from 'firebase/firestore';
 import { db } from './firebase';
 import ScrollToTop from './components/ScrollToTop';
 import Navbar from './components/Navbar';
@@ -32,6 +32,10 @@ export interface PageBanners {
   capability?: string;
   products?: string;
   contact?: string;
+}
+
+export interface AppSettings {
+  tubeFittingsVisible?: boolean;
 }
 
 function Layout({ children }: { children: React.ReactNode }) {
@@ -73,6 +77,7 @@ export default function App() {
   const [productItems, setProductItems] = useState<DisplayItem[]>([]);
   const [mainItems, setMainItems] = useState<DisplayItem[]>([]);
   const [pageBanners, setPageBanners] = useState<PageBanners>({});
+  const [settings, setSettings] = useState<AppSettings>({ tubeFittingsVisible: true });
 
   useEffect(() => {
     const unsubscribeMain = onSnapshot(query(collection(db, 'mainItems'), orderBy('createdAt', 'asc')), (snapshot) => {
@@ -99,10 +104,19 @@ export default function App() {
       console.error("Error fetching page banners:", error);
     });
 
+    const unsubscribeSettings = onSnapshot(doc(db, 'settings', 'categories'), (snapshot) => {
+      if (snapshot.exists()) {
+        setSettings(snapshot.data() as AppSettings);
+      }
+    }, (error) => {
+      console.error("Error fetching settings:", error);
+    });
+
     return () => {
       unsubscribeMain();
       unsubscribeProducts();
       unsubscribeBanners();
+      unsubscribeSettings();
     };
   }, []);
 
@@ -118,12 +132,12 @@ export default function App() {
           <Route path="/" element={<Hero mainItems={mainItems} />} />
           <Route path="/about" element={<About bannerUrl={pageBanners.about} />} />
           <Route path="/capability" element={<Capability bannerUrl={pageBanners.capability} />} />
-          <Route path="/products" element={<Products productItems={productItems} bannerUrl={pageBanners.products} />} />
+          <Route path="/products" element={<Products productItems={productItems} bannerUrl={pageBanners.products} settings={settings} />} />
           <Route path="/contact" element={<Contact bannerUrl={pageBanners.contact} />} />
           <Route path="/login" element={<AdminLogin setIsAuthenticated={handleSetIsAuthenticated} />} />
           <Route 
             path="/admin" 
-            element={isAuthenticated ? <Admin productItems={productItems} setProductItems={setProductItems} mainItems={mainItems} setMainItems={setMainItems} pageBanners={pageBanners} setIsAuthenticated={handleSetIsAuthenticated} /> : <Navigate to="/login" replace />} 
+            element={isAuthenticated ? <Admin productItems={productItems} setProductItems={setProductItems} mainItems={mainItems} setMainItems={setMainItems} pageBanners={pageBanners} setIsAuthenticated={handleSetIsAuthenticated} settings={settings} /> : <Navigate to="/login" replace />} 
           />
         </Routes>
       </Layout>

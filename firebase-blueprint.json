@@ -94,9 +94,28 @@
         }
       },
       "required": ["imageUrl", "updatedAt"]
+    },
+    "Settings": {
+      "title": "Settings",
+      "description": "Global application settings (e.g., category visibility).",
+      "type": "object",
+      "properties": {
+        "tubeFittingsVisible": {
+          "type": "boolean",
+          "description": "Whether the Tube Fittings category is visible on the products page."
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
     }
   },
   "firestore": {
+    "/settings/{settingId}": {
+      "schema": { "$ref": "#/entities/Settings" },
+      "description": "Application configuration and settings."
+    },
     "/pageBanners/{pageId}": {
       "schema": { "$ref": "#/entities/PageBanner" },
       "description": "Banner images for main pages."
